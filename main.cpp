@@ -1,4 +1,4 @@
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <string>
 #include <iostream>
 #include <sys/socket.h>
@@ -76,13 +76,31 @@ static std::string http11_get(const std::string& url) {
     return (p == std::string::npos) ? resbuf : resbuf.substr(p + 4); 
 }
 
-static std::string extract_title(const std::string& body) {
+static std::string extract_title(const std::string body) {
     auto start = body.find("<title>");
     auto end = body.find("</title>");
     if (start == std::string::npos || end == std::string::npos)
         return "No Title";
+    // std::cout << "start: " << std::type_info(start) << "\n"; // compile error
     start += 7; 
     return body.substr(start, end - start);
+}
+
+
+// html tokenizer
+static std::string tokenization(const std::string body) {
+    // extract all <p>...</p> elements
+    size_t pos = 0;
+    // terminated by signal SIGSEGV
+    while (pos != std::string::npos) {
+        auto p_s = body.find("<p>", pos);
+        auto p_e = body.find("</p>", pos);
+        if (p_s == std::string::npos || p_e == std::string::npos) break;
+        std::cout << "<p>: " << body.substr(p_s + 3, p_e - (p_s + 3)) << std::endl;
+        pos = p_e + 4;
+    }
+
+    return 0;
 }
 
 int main(int argc, char** argv) {
@@ -112,9 +130,10 @@ int main(int argc, char** argv) {
                     try {
                         auto body = http11_get(url);
                         std::string title = extract_title(body);
-                        std::cout << "Body size: " << body.size() << " bytes\n";
+                        //std::cout << "Body size: " << body.size() << " bytes\n";
                         std::cout << "Title: " << title << "\n";
                         SDL_SetWindowTitle(win, title.c_str());
+                        tokenization(body);
                     } catch (const std::exception& ex) {
                         std::cerr << "Error: " << ex.what() << "\n";
                         SDL_SetWindowTitle(win, "BeChromium - error");
