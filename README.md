@@ -23,7 +23,7 @@ clang++ -std=c++20 -O2 main.cpp -o be_chromium $(pkg-config --cflags --libs sdl2
 ## fish
 set -l CFLAGS (pkg-config --cflags sdl2 libcurl | string split " ")
 set -l LIBS   (pkg-config --libs   sdl2 libcurl | string split " ")
-clang++ -std=c++20 -O2 $CFLAGS main.cpp -o be_chromium $LIBS
+clang++ -std=c++20 -O2 $CFLAGS main.cpp tokenizer.cpp -o be_chromium $LIBS
 
 # 実行（既定 URL は https://example.com）
 ./be_chromium

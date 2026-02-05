@@ -1,9 +1,10 @@
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <string>
 #include <iostream>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
+#include "tokenizer.h"
 
 // URLからhost, port, pathを取得
 static void split_url(const std::string& url,
@@ -87,21 +88,7 @@ static std::string extract_title(const std::string body) {
 }
 
 
-// html tokenizer
-static std::string tokenization(const std::string body) {
-    // extract all <p>...</p> elements
-    size_t pos = 0;
-    // terminated by signal SIGSEGV
-    while (pos != std::string::npos) {
-        auto p_s = body.find("<p>", pos);
-        auto p_e = body.find("</p>", pos);
-        if (p_s == std::string::npos || p_e == std::string::npos) break;
-        std::cout << "<p>: " << body.substr(p_s + 3, p_e - (p_s + 3)) << std::endl;
-        pos = p_e + 4;
-    }
-
-    return 0;
-}
+// html tokenizer is implemented in tokenizer.cpp
 
 int main(int argc, char** argv) {
     std::string url = (argc >= 2) ? argv[1] : "http://example.com/";
@@ -128,11 +115,13 @@ int main(int argc, char** argv) {
                 if (e.key.keysym.sym == SDLK_ESCAPE) running = false;
                 if (e.key.keysym.sym == SDLK_r) {
                     try {
-                        auto body = http11_get(url);
-                        std::string title = extract_title(body);
-                        //std::cout << "Body size: " << body.size() << " bytes\n";
-                        std::cout << "Title: " << title << "\n";
+                        //auto body = http11_get(url);
+                        std::string title = "Test html";
+                        auto body = "<body> <div> <p>Hello <b>world</b>!</p> <p>Second paragraph.</p> </div> </body>";
+                        //std::string title = extract_title(body);
+                        //std::cout << "Title: " << title << "\n";
                         SDL_SetWindowTitle(win, title.c_str());
+                        // tokenize html body
                         tokenization(body);
                     } catch (const std::exception& ex) {
                         std::cerr << "Error: " << ex.what() << "\n";
