@@ -122,7 +122,7 @@ int main(int argc, char** argv) {
                         //std::cout << "Title: " << title << "\n";
                         SDL_SetWindowTitle(win, title.c_str());
                         // tokenize html body
-                        tokenization(body);
+                        tokenize_html(body);
                     } catch (const std::exception& ex) {
                         std::cerr << "Error: " << ex.what() << "\n";
                         SDL_SetWindowTitle(win, "BeChromium - error");

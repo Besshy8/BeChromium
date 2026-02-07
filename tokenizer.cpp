@@ -1,21 +1,80 @@
-#include "tokenizer.h"
+#include <string>
+#include <vector>
+#include <optional>
 #include <iostream>
-#include <stdio.h>
+#include <cctype>
+#include "tokenizer.h"
 
-void tokenization(const std::string body) {
-    // extract all <p>...</p> elements
-    size_t pos = 0;
-    while (pos != std::string::npos) {
-        auto p_s = body.find("<p>", pos);
-        auto p_e = body.find("</p>", pos);
-        //printf("p_s: %zu, p_e: %zu", p_s, p_e);
-        if (p_s == std::string::npos || p_e == std::string::npos) {
-            //std::cout << "no more <p> or </p>\n";
-            break;
+
+// tokenize http body 
+std::vector<Token> tokenize_html(const std::string& input) {
+    std::vector<Token> out;
+    std::string textBuf; 
+    std::string name; // tag name
+
+    const size_t N = input.size();
+    size_t i = 0;
+
+    while (i < N) {
+        char c = input[i];
+        if (c != '<') {
+            textBuf.push_back(c);
+            ++i;
+            continue;
         }
-        std::string p_str = body.substr(p_s + 3, p_e - (p_s + 3));
-        pos = p_e + 4;
-        printf("%s\n", p_str.c_str());
+
+        // case '<' → assignment just before text to Token(Text)
+        if (!textBuf.empty()) {
+            out.push_back(Token{Token::Type::Text, "", textBuf});
+        }
+        textBuf.clear();
+
+        if (input[i + 1] == '/') { // e.g. </div>
+            i += 2; // '<' and '/' 
+            while (i < N) {
+                if (input[i] == '>') {
+                    ++i;
+                    break;
+                };
+                name.push_back(input[i]);
+                ++i;
+            }
+            out.push_back(Token{Token::Type::EndTag, name, ""});
+            name.clear();
+        } else { // e.g. <div>
+            ++i; // '<' 
+            while (i < N) {
+                if (input[i] == '>') {
+                    ++i;
+                    break;
+                } 
+                name.push_back(input[i]);
+                ++i;
+            }
+            out.push_back(Token{Token::Type::StartTag, name, ""});
+            name.clear();
+        }
     }
-    //printf("%s", "END_token");
+
+    return out;
 }
+
+// 動作確認
+//int main() {
+//    std::string body = "<body><div><p>Hello <b>world</b></p><p>Second paragraph.</p></div></body>";
+//    auto tokens = tokenize_minimal_html(body);
+//
+//    for (const auto& t : tokens) {
+//        switch (t.type) {
+//            case Token::Type::StartTag:
+//                std::cout << "StartTag(" << t.name << ")\n";
+//                break;
+//            case Token::Type::EndTag:
+//                std::cout << "EndTag(" << t.name << ")\n";
+//               break;
+//            case Token::Type::Text:
+//                std::cout << "Text(" << t.data << ")\n";
+//                break;
+//        }
+//    }
+//    return 0;}
