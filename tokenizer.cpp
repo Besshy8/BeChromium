@@ -59,22 +59,36 @@ std::vector<Token> tokenize_html(const std::string& input) {
     return out;
 }
 
-// 動作確認
-//int main() {
-//    std::string body = "<body><div><p>Hello <b>world</b></p><p>Second paragraph.</p></div></body>";
-//    auto tokens = tokenize_minimal_html(body);
-//
-//    for (const auto& t : tokens) {
-//        switch (t.type) {
-//            case Token::Type::StartTag:
-//                std::cout << "StartTag(" << t.name << ")\n";
-//                break;
-//            case Token::Type::EndTag:
-//                std::cout << "EndTag(" << t.name << ")\n";
-//               break;
-//            case Token::Type::Text:
-//                std::cout << "Text(" << t.data << ")\n";
-//                break;
-//        }
-//    }
-//    return 0;}
+DomTree* make_dom_tree(const std::vector<Token>& tokens) {
+    DomTree* root = new DomTree{};
+    root->element = Token{Token::Type::Top, "", ""} ; 
+
+    DomTree* dom_p = root;
+    std::vector<DomTree*> node_stack;
+
+    const size_t N = tokens.size();
+    size_t i = 0;
+
+    while (i < N) {
+        if (tokens[i].type == Token::Type::StartTag) {
+            dom_p->children.push_back(std::make_unique<DomTree>());
+            DomTree* child = dom_p->children.back().get(); // childへのポインタを取得 
+            child->element = tokens[i];
+            node_stack.push_back(dom_p); // 親を保存
+            dom_p = child;
+            ++i;
+        } else if (tokens[i].type == Token::Type::EndTag) {
+            dom_p = node_stack.back(); // 自分の親にポインタを戻す
+            node_stack.pop_back();
+            ++i;
+        } else {
+            // case Token::Type::Text
+            dom_p->children.push_back(std::make_unique<DomTree>());
+            DomTree* child = dom_p->children.back().get();
+            child->element = tokens[i];
+            //dom_p = child;
+            ++i;
+        }
+    }
+    return root;
+}

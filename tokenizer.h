@@ -6,7 +6,7 @@
 
 // Token型
 struct Token {
-    enum class Type { StartTag, EndTag, Text } type;
+    enum class Type { StartTag, EndTag, Text, Top } type;
     std::string name; // Start/End 
     std::string data; // Text 
 };
@@ -14,3 +14,8 @@ struct Token {
 std::vector<Token> tokenize_html(const std::string& input);
 
 #endif // TOKENIZER_H
+
+struct DomTree {
+    Token element;
+    std::vector<std::unique_ptr<DomTree>> children;
+};
