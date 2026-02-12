@@ -13,9 +13,12 @@ struct Token {
 
 std::vector<Token> tokenize_html(const std::string& input);
 
-#endif // TOKENIZER_H
-
 struct DomTree {
     Token element;
     std::vector<std::unique_ptr<DomTree>> children;
 };
+
+// build DOM tree from token list
+DomTree* make_dom_tree(const std::vector<Token>& tokens);
+
+#endif // TOKENIZER_H

@@ -1,10 +1,14 @@
 #include <SDL.h>
+#include <SDL_ttf.h>
 #include <string>
 #include <iostream>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
 #include "tokenizer.h"
+#include "layout.h"
+
+DisplayList dl;
 
 // URLからhost, port, pathを取得
 static void split_url(const std::string& url,
@@ -87,6 +91,22 @@ static std::string extract_title(const std::string body) {
     return body.substr(start, end - start);
 }
 
+// drawing Display list 
+static void draw_display_list(SDL_Renderer* ren, TTF_Font* font, const DisplayList& dl){
+    SDL_Color col{0,0,0,255};
+    for(const auto& cmd : dl){
+        SDL_Surface* s = TTF_RenderText_Blended(font, cmd.text.c_str(), col); 
+        if(!s) continue;
+        SDL_Texture* t = SDL_CreateTextureFromSurface(ren, s);
+        SDL_Rect dst{cmd.x, cmd.y, s->w, s->h};
+        SDL_FreeSurface(s);
+        if(t){
+            SDL_RenderCopy(ren, t, nullptr, &dst);
+            SDL_DestroyTexture(t);
+        }
+    }
+}
+
 
 // html tokenizer is implemented in tokenizer.cpp
 
@@ -96,6 +116,14 @@ int main(int argc, char** argv) {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         std::cerr << "SDL_Init: " << SDL_GetError() << "\n";
         return 1;
+    }
+
+    // set font (day4)
+    TTF_Init();
+    TTF_Font* font = TTF_OpenFont("/Library/Fonts/Arial Unicode.ttf", 18); // 手元のttfに合わせて
+    if (!font) { 
+        std::cerr << TTF_GetError() << "\n"; 
+        return 1; 
     }
 
     SDL_Window* win = SDL_CreateWindow(
@@ -117,12 +145,16 @@ int main(int argc, char** argv) {
                     try {
                         //auto body = http11_get(url);
                         std::string title = "Test html";
-                        auto body = "<body> <div> <p>Hello <b>world</b>!</p> <p>Second paragraph.</p> </div> </body>";
-                        //std::string title = extract_title(body);
-                        //std::cout << "Title: " << title << "\n";
+                        auto body = "<body> <div> <p>Hello world!</p> <p>Second paragraph.</p> </div> </body>";
                         SDL_SetWindowTitle(win, title.c_str());
                         // tokenize html body
-                        tokenize_html(body);
+                        std::vector<Token> tokens = tokenize_html(body);
+                        DomTree* dom = make_dom_tree(tokens);
+
+                        int w=0, h=0; 
+                        SDL_GetWindowSize(win, &w, &h);
+                        dl = build_display_list(dom, font, w);
+
                     } catch (const std::exception& ex) {
                         std::cerr << "Error: " << ex.what() << "\n";
                         SDL_SetWindowTitle(win, "BeChromium - error");
@@ -132,6 +164,7 @@ int main(int argc, char** argv) {
         }
         SDL_SetRenderDrawColor(ren, 250, 250, 250, 255);
         SDL_RenderClear(ren);
+        draw_display_list(ren, font, dl); 
         SDL_RenderPresent(ren);
     }
 
