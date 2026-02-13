@@ -93,11 +93,11 @@ static std::string extract_title(const std::string body) {
 
 // drawing Display list 
 static void draw_display_list(SDL_Renderer* ren, TTF_Font* font, const DisplayList& dl){
-    SDL_Color col{0,0,0,255};
+    SDL_Color col{0,0,0,255}; // RGB black
     for(const auto& cmd : dl){
-        SDL_Surface* s = TTF_RenderText_Blended(font, cmd.text.c_str(), col); 
+        SDL_Surface* s = TTF_RenderText_Blended(font, cmd.text.c_str(), col); // image on CPU mem
         if(!s) continue;
-        SDL_Texture* t = SDL_CreateTextureFromSurface(ren, s);
+        SDL_Texture* t = SDL_CreateTextureFromSurface(ren, s); // transform for GPU rendering
         SDL_Rect dst{cmd.x, cmd.y, s->w, s->h};
         SDL_FreeSurface(s);
         if(t){
@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
 
                         int w=0, h=0; 
                         SDL_GetWindowSize(win, &w, &h);
-                        dl = build_display_list(dom, font, w);
+                        dl = build_display_list(dom, font);
 
                     } catch (const std::exception& ex) {
                         std::cerr << "Error: " << ex.what() << "\n";

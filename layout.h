@@ -13,6 +13,6 @@ struct DrawTextCmd {
 using DisplayList = std::vector<DrawTextCmd>;
 
 // create display list (for drawing)
-DisplayList build_display_list(const DomTree* root, TTF_Font* font, int vw);
+DisplayList build_display_list(const DomTree* root, TTF_Font* font);
 
 #endif // LAYOUT_H
