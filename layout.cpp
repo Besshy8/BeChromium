@@ -14,7 +14,8 @@ static void collect_text(const DomTree* n, std::string& out){
 }
 
 // create display list by using DFS
-DisplayList build_display_list(const DomTree* root, TTF_Font* font){
+DisplayList build_display_list(const DomTree* root, TTF_Font* font,
+                                const std::vector<Rule>& css){
     DisplayList dl;
     int x0 = 16, y = 16;
     int lineH = TTF_FontHeight(font) + 4;
@@ -26,8 +27,10 @@ DisplayList build_display_list(const DomTree* root, TTF_Font* font){
         if(e.type == Token::Type::StartTag && e.name == "p"){
             std::string text; 
             collect_text(n, text);
-            dl.push_back({x0, y, text}); 
-            y += lineH + pMargin;                       
+            Style st=style_for(css, "p"); 
+            TTF_SetFontSize(font, st.px);
+            dl.push_back({x0, y, text, st.c, font}); 
+            y += (TTF_FontHeight(font)+4) + pMargin;                       
             return;
         }
         for(const auto& ch : n->children) {

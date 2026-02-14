@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include "tokenizer.h"
 #include "layout.h"
+#include "css.h"
 
 DisplayList dl;
 
@@ -92,10 +93,10 @@ static std::string extract_title(const std::string body) {
 }
 
 // drawing Display list 
-static void draw_display_list(SDL_Renderer* ren, TTF_Font* font, const DisplayList& dl){
-    SDL_Color col{0,0,0,255}; // RGB black
+static void draw_display_list(SDL_Renderer* ren, const DisplayList& dl){
+    //SDL_Color col{0,0,0,255}; // RGB black
     for(const auto& cmd : dl){
-        SDL_Surface* s = TTF_RenderText_Blended(font, cmd.text.c_str(), col); // image on CPU mem
+        SDL_Surface* s = TTF_RenderText_Blended(cmd.font, cmd.text.c_str(), cmd.c); // image on CPU mem
         if(!s) continue;
         SDL_Texture* t = SDL_CreateTextureFromSurface(ren, s); // transform for GPU rendering
         SDL_Rect dst{cmd.x, cmd.y, s->w, s->h};
@@ -146,14 +147,15 @@ int main(int argc, char** argv) {
                         //auto body = http11_get(url);
                         std::string title = "Test html";
                         auto body = "<body> <div> <p>Hello world!</p> <p>Second paragraph.</p> </div> </body>";
+                        auto css = "body{font-size:18px;}p{color:#0072e4;font-size:36px;}";
                         SDL_SetWindowTitle(win, title.c_str());
                         // tokenize html body
                         std::vector<Token> tokens = tokenize_html(body);
                         DomTree* dom = make_dom_tree(tokens);
-
+                        std::vector<Rule> cssom= parse_css(css);
                         int w=0, h=0; 
                         SDL_GetWindowSize(win, &w, &h);
-                        dl = build_display_list(dom, font);
+                        dl = build_display_list(dom, font, cssom);
 
                     } catch (const std::exception& ex) {
                         std::cerr << "Error: " << ex.what() << "\n";
@@ -164,7 +166,7 @@ int main(int argc, char** argv) {
         }
         SDL_SetRenderDrawColor(ren, 250, 250, 250, 255);
         SDL_RenderClear(ren);
-        draw_display_list(ren, font, dl); 
+        draw_display_list(ren, dl); 
         SDL_RenderPresent(ren);
     }
 
