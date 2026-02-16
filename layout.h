@@ -13,6 +13,8 @@ struct DrawTextCmd {
     std::string text;  
     SDL_Color c; 
     TTF_Font* font;
+    SDL_Rect box;
+    std::string onclick; // "alert('hi'); count += 1"
 };
 using DisplayList = std::vector<DrawTextCmd>;
 

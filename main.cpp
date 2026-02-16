@@ -2,14 +2,17 @@
 #include <SDL_ttf.h>
 #include <string>
 #include <iostream>
+#include <cstdio>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
 #include "tokenizer.h"
 #include "layout.h"
 #include "css.h"
+#include "js.h"
 
 DisplayList dl;
+JS js;
 
 // URLからhost, port, pathを取得
 static void split_url(const std::string& url,
@@ -136,6 +139,7 @@ int main(int argc, char** argv) {
     std::cout << "Press R to GET: " << url << "\nEsc or close window to quit.\n";
 
     bool running = true;
+    js.init();
     while (running) {
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
@@ -143,10 +147,10 @@ int main(int argc, char** argv) {
             if (e.type == SDL_KEYDOWN) {
                 if (e.key.keysym.sym == SDLK_ESCAPE) running = false;
                 if (e.key.keysym.sym == SDLK_r) {
-                    try {
+                    try { 
                         //auto body = http11_get(url);
                         std::string title = "Test html";
-                        auto body = "<body> <div> <p>Hello world!</p> <p>Second paragraph.</p> </div> </body>";
+                        auto body = R"(<body><div><p onclick="alert('hi'); count += 1">Hello world!</p><p>Second paragraph.</p></div></body>)";
                         auto css = "body{font-size:18px;}p{color:#0072e4;font-size:36px;}";
                         SDL_SetWindowTitle(win, title.c_str());
                         // tokenize html body
@@ -162,6 +166,11 @@ int main(int argc, char** argv) {
                         SDL_SetWindowTitle(win, "BeChromium - error");
                     }
                 }
+                // when keydown, check all dl element and judge whether hit point is internal Text box
+            }
+            if(e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT){
+                dispatch_click(js, dl, e.button.x, e.button.y);
+                SDL_SetWindowTitle(win, ("count=" + std::to_string(js.count())).c_str());
             }
         }
         SDL_SetRenderDrawColor(ren, 250, 250, 250, 255);
